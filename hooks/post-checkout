@@ -1,0 +1,39 @@
+#!/usr/bin/env ruby
+
+require './jira_store.rb'
+
+STDIN.reopen('/dev/tty')
+
+def previous_head
+  ARGV[0]
+end
+
+def new_head
+  ARGV[1]
+end
+
+def branch_switch?
+  ARGV[2] == '1'
+end
+
+def current_branch
+  `git symbolic-ref -q HEAD --short`
+end
+
+def query(message)
+  print "#{message} > "
+  STDIN.gets.chomp
+end
+
+def quit_if_detached_head
+  exit(1) unless current_branch!=''
+end
+
+
+quit_if_detached_head
+
+jira = query("Please enter a JIRA Number")
+
+
+JiraStore
+

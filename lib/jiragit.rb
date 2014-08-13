@@ -1,0 +1,6 @@
+require 'jiragit/version'
+require 'jiragit/cli'
+require 'jiragit/git'
+require 'jiragit/tag'
+require 'jiragit/vault'
+require 'jiragit/jira_store'
