@@ -25,16 +25,19 @@ module Jiragit
     end
 
     def install
-      puts "Installing into #{Jiragit::repository_root}"
+      puts "Installing into #{Jiragit::Git.repository_root}"
       gem_hook_paths.each do |hook|
-        `cp #{hook} #{Jiragit::repository_root}/.git/hooks/`
+        `cp #{hook} #{Jiragit::Git.repository_root}/.git/hooks/`
+      end
+      gem_hook_files.each do |hook|
+        `chmod a+x #{Jiragit::Git.repository_root}/.git/hooks/#{hook}`
       end
     end
 
     def remove
-      puts "Removing from #{Jiragit::repository_root}"
+      puts "Removing from #{Jiragit::Git.repository_root}"
       gem_hook_files.each do |hook|
-        `rm #{Jiragit::repository_root}/.git/hooks/#{hook}`
+        `rm #{Jiragit::Git.repository_root}/.git/hooks/#{hook}`
       end
     end
 

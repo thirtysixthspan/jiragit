@@ -6,3 +6,16 @@ RSpec::Core::RakeTask.new(:spec) do |task|
 end
 
 task :default => :spec
+
+
+namespace :gem do
+
+  task :build do
+    `gem build jiragit.gemspec`
+  end
+
+  task :install => [:build] do
+    `gem install pkg/jiragit-1.0.0.gem`
+  end
+
+end

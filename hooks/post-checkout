@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require './jira_store.rb'
+#require './jira_store.rb'
 
 STDIN.reopen('/dev/tty')
 
@@ -30,10 +30,10 @@ def quit_if_detached_head
 end
 
 
-quit_if_detached_head
+#quit_if_detached_head
 
 jira = query("Please enter a JIRA Number")
 
-
-JiraStore
+puts jira
+#JiraStore
 
