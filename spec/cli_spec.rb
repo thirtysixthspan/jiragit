@@ -18,16 +18,16 @@ module Jiragit
     end
 
     context "with a git repository" do
-      REPO = 'test_repository'
 
       before do
-        Jiragit::create_repository(REPO)
-        Dir.chdir REPO
+        repository = "test_repository"
+        @repo = Jiragit::Git::Repository.create(repository)
+        Dir.chdir repository
       end
 
       after do
         Dir.chdir '..'
-        Jiragit::remove_repository(REPO)
+        @repo.remove
       end
 
       it "should not have hooks installed" do

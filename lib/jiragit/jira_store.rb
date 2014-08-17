@@ -1,3 +1,5 @@
+require 'set'
+
 module Jiragit
 
   class JiraStore
@@ -13,9 +15,14 @@ module Jiragit
     end
 
     def relations(params)
-      tag = extract_tags(params).compact.first
+      jira, branch, commit = extract_tags(params).compact.first
+      tag = [jira, branch, commit].detect { |tag| !tag.nil? }
       return Set.new unless tag
       vault.relations(tag)
+    end
+
+    def reload
+      vault.load
     end
 
     private

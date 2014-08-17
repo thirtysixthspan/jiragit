@@ -4,12 +4,20 @@ module Jiragit
 
     COMMANDS = [
       :install,
-      :remove
+      :remove,
+      :jira,
+      :jira_branch
+    ]
+
+    FLAGS = [
+      :silent
     ]
 
     def initialize(args)
      exit_with_help and return if args.empty?
+     @args = args
      command = args[0].to_sym
+     @params = args[1..-1]
      exit_with_help and return unless COMMANDS.include?(command)
      self.send(command)
     end
@@ -25,7 +33,7 @@ module Jiragit
     end
 
     def install
-      puts "Installing into #{Jiragit::Git.repository_root}"
+      puts "Installing into #{Jiragit::Git.repository_root}" unless silent?
       gem_hook_paths.each do |hook|
         `cp #{hook} #{Jiragit::Git.repository_root}/.git/hooks/`
       end
@@ -41,7 +49,24 @@ module Jiragit
       end
     end
 
+    def jira
+      puts "Listing all relations for jira #{@params[0]}"
+      js = JiraStore.new("#{Jiragit::Git.repository_root}/.git/jira_store")
+      puts js.relations(jira: @params[0]).to_a
+    end
+
+    def jira_branch
+      puts "Relating jira #{@params[0]} and branch #{@params[1]}"
+      js = JiraStore.new("#{Jiragit::Git.repository_root}/.git/jira_store")
+      js.relate(jira: @params[0], branch: @params[1])
+    end
+
+
     private
+
+      def silent?
+        !!@args.detect { |a| a == :silent }
+      end
 
       def gem_hook_paths
         spec = Gem::Specification.find_by_name('jiragit')

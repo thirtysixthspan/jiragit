@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-#require './jira_store.rb'
+require 'jiragit'
 
 STDIN.reopen('/dev/tty')
 
@@ -17,7 +17,7 @@ def branch_switch?
 end
 
 def current_branch
-  `git symbolic-ref -q HEAD --short`
+  `git symbolic-ref -q HEAD --short`.chomp
 end
 
 def query(message)
@@ -32,8 +32,12 @@ end
 
 #quit_if_detached_head
 
-jira = query("Please enter a JIRA Number")
 
-puts jira
-#JiraStore
+#puts "Existing relations", js.relations(branch: current_branch).to_a
+
+jira = query("Is there a JIRA Number?")
+
+js = Jiragit::JiraStore.new("#{Jiragit::Git.repository_root}/.git/jira_store")
+js.relate(jira: jira, branch: current_branch)
+
 

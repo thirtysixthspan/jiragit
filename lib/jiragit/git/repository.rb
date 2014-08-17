@@ -28,8 +28,12 @@ module Jiragit
         run_command("git checkout -b #{branch}", &block)
       end
 
-      def initial_commit(&block)
-        run_command("touch README.md; git add README.md; git commit -m 'initial commit'", &block)
+      def checkout_branch(branch, &block)
+        run_command("git checkout #{branch}", &block)
+      end
+
+      def make_a_commit(&block)
+        run_command("touch README.md; git add README.md; git commit -m 'a commit'", &block)
       end
 
       def root

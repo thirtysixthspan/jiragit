@@ -15,12 +15,11 @@ RSpec.configure do |config|
     rake['gem:install'].invoke
   end
 
-  def create_test_repository
-    repo_name = 'test_repository'
-    repo = Jiragit::Git::Repository.create(repo_name)
-    repo.initial_commit
-    Dir.chdir repo_name
-    Jiragit::Cli.new([:install])
+  def create_test_repository(repository)
+    repo = Jiragit::Git::Repository.create(repository)
+    repo.make_a_commit
+    Dir.chdir repository
+    Jiragit::Cli.new([:install, :silent])
     Dir.chdir '..'
     repo
   end
