@@ -2,6 +2,10 @@
 
 require 'jiragit'
 
+log = Jiragit::Logger.new(".git/jiragit/hooks.log")
+log.hook = File.basename $0
+log.info "launched"
+
 STDIN.reopen('/dev/tty')
 
 def previous_head
@@ -29,15 +33,20 @@ def quit_if_detached_head
   exit(1) unless current_branch!=''
 end
 
-
+def jira_store
+  @jira_store ||= Jiragit::JiraStore.new(".git/jiragit/jira_store")
+end
 #quit_if_detached_head
 
 
-#puts "Existing relations", js.relations(branch: current_branch).to_a
+relations = jira_store.relations(branch: current_branch).to_a
+types = relations.map{ |r| r.type }
 
-jira = query("Is there a JIRA Number?")
+if !types.include?(:jira)
+  jira = query("Is there a JIRA Number?")
+  jira_store.relate(jira: jira, branch: current_branch) unless jira.empty?
+end
 
-js = Jiragit::JiraStore.new("#{Jiragit::Git.repository_root}/.git/jira_store")
-js.relate(jira: jira, branch: current_branch)
+
 
 

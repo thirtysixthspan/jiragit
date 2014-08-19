@@ -1,4 +1,5 @@
 require 'jiragit/version'
+require 'jiragit/logger'
 require 'jiragit/cli'
 require 'jiragit/git/repository'
 require 'jiragit/tag'

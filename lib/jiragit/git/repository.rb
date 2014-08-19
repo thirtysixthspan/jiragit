@@ -46,6 +46,7 @@ module Jiragit
 
         def run_command(command, &block)
           PTY.spawn("cd #{path}; #{command} 2>&1") do |output, input|
+            sleep(1) #avoid race conditions
             yield output, input if block_given?
           end
         end
