@@ -31,6 +31,27 @@ describe "Repository Behaviors" do
       assert_relation({jira: 'PA-12345'}, {branch: 'new_branch'})
     end
 
+    it "records multiple jira_branch relations" do
+      checkout_a_new_branch('new_branch', 'PA-12345, PA-54321')
+      assert_relation({jira: 'PA-12345'}, {branch: 'new_branch'})
+      assert_relation({jira: 'PA-54321'}, {branch: 'new_branch'})
+    end
+
+    context "previous branch has associated jiras" do
+
+      before do
+        checkout_a_new_branch('parent_branch', 'PA-12345')
+        @repo.make_a_commit
+      end
+
+      it "should provide and accept defaults" do
+        assert_relation({jira: 'PA-12345'}, {branch: 'parent_branch'})
+        checkout_a_new_branch_with_default('child_branch')
+        assert_relation({jira: 'PA-12345'}, {branch: 'child_branch'})
+      end
+
+    end
+
   end
 
   context "when checking out an existing branch" do
@@ -73,11 +94,20 @@ describe "Repository Behaviors" do
 
       it "does not ask for a jira number" do
         @repo.checkout_branch('new_branch') do |output, input|
-          output.expect("JIRA", 5) do |message|
+          output.expect("What is the JIRA Number?", 5) do |message|
             expect(message).to be nil
           end
         end
       end
+
+      it "lists associated jira numbers" do
+        @repo.checkout_branch('new_branch') do |output, input|
+          output.expect("PA-12345", 5) do |message|
+            expect(message).to_not be nil
+          end
+        end
+      end
+
 
     end
 
@@ -95,6 +125,16 @@ describe "Repository Behaviors" do
         expect(message).to_not be nil
       end
       input.puts(jira) if !jira.empty?
+    end
+  end
+
+  def checkout_a_new_branch_with_default(branch)
+    @repo.checkout_new_branch(branch) do |output, input|
+      output.expect(']>', 20) do |message|
+        puts "new default #{message}" if @debug
+        expect(message).to_not be nil
+      end
+      input.puts ""
     end
   end
 

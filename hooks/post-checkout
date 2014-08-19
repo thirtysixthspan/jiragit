@@ -21,30 +21,76 @@ def branch_switch?
 end
 
 def current_branch
-  `git symbolic-ref -q HEAD --short`.chomp
+  Jiragit::Git.current_branch
 end
 
-def query(message)
-  print "#{message} > "
-  STDIN.gets.chomp
+def previous_branch
+  Jiragit::Git.previous_branch
 end
 
-def quit_if_detached_head
-  exit(1) unless current_branch!=''
+def new_branch?
+  current_branch != previous_branch
 end
+
+def detached_head
+  current_branch==''
+end
+
+def master_branch
+  current_branch=='master'
+end
+
+
+def query(message, default=nil)
+  if default
+    print "#{message} [#{default}]> "
+  else
+    print "#{message} > "
+  end
+  response = STDIN.gets.chomp
+  if response.empty? && default
+    default
+  else
+    response
+  end
+end
+
+def message(message)
+  puts message
+end
+
 
 def jira_store
   @jira_store ||= Jiragit::JiraStore.new(".git/jiragit/jira_store")
 end
-#quit_if_detached_head
 
+def related_jiras(params)
+  jira_store
+    .relations(params)
+    .to_a
+    .select { |r| r.type == :jira }
+    .map(&:label)
+end
 
-relations = jira_store.relations(branch: current_branch).to_a
-types = relations.map{ |r| r.type }
+def relate_jiras(jiras)
+  return if jiras.empty?
+  jiras.gsub(/\s/,'').split(',').each do |jira|
+    jira_store.relate(jira: jira, branch: current_branch) unless jira.empty?
+  end
+end
 
-if !types.include?(:jira)
-  jira = query("Is there a JIRA Number?")
-  jira_store.relate(jira: jira, branch: current_branch) unless jira.empty?
+exit(1) if detached_head || master_branch
+
+if related_jiras(branch: current_branch).any?
+
+  message("JIRA(s): #{related_jiras(branch: current_branch).join(', ')}")
+
+else
+
+  default = related_jiras(branch: previous_branch).join(', ') if new_branch?
+  jiras = query("What is the JIRA Number?", default)
+  relate_jiras(jiras)
+
 end
 
 

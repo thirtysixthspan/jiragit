@@ -6,6 +6,7 @@ module Jiragit
       :install,
       :remove,
       :jira,
+      :branch,
       :jira_branch
     ]
 
@@ -51,13 +52,20 @@ module Jiragit
 
     def jira
       puts "Listing all relations for jira #{@params[0]}"
-      js = JiraStore.new("#{Jiragit::Git.repository_root}/.git/jira_store")
+      js = JiraStore.new("#{Jiragit::Git.repository_root}/.git/jiragit/jira_store")
       puts js.relations(jira: @params[0]).to_a
+    end
+
+    def branch
+      branch = @params[0] || Jiragit::Git.current_branch
+      puts "Listing all relations for branch #{branch}"
+      js = JiraStore.new("#{Jiragit::Git.repository_root}/.git/jiragit/jira_store")
+      puts js.relations(branch: branch).to_a
     end
 
     def jira_branch
       puts "Relating jira #{@params[0]} and branch #{@params[1]}"
-      js = JiraStore.new("#{Jiragit::Git.repository_root}/.git/jira_store")
+      js = JiraStore.new("#{Jiragit::Git.repository_root}/.git/jiragit/jira_store")
       js.relate(jira: @params[0], branch: @params[1])
     end
 

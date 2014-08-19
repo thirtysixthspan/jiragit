@@ -18,6 +18,7 @@ module Jiragit
       jira, branch, commit = extract_tags(params).compact.first
       tag = [jira, branch, commit].detect { |tag| !tag.nil? }
       return Set.new unless tag
+      vault.load
       vault.relations(tag)
     end
 

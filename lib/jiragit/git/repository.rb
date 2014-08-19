@@ -8,6 +8,14 @@ module Jiragit
       `git rev-parse --show-toplevel`.chomp
     end
 
+    def self.current_branch
+      `git symbolic-ref -q HEAD --short`.chomp
+    end
+
+    def self.previous_branch
+      `git rev-parse --symbolic-full-name --abbrev-ref @{-1}`.chomp
+    end
+
     class Repository
 
       def self.create(path)
