@@ -42,11 +42,30 @@ module Jiragit
 
       def make_a_commit(&block)
         number = rand(100)
-        run_command("echo \"#{number}\" > README.md; git add README.md; git commit -m 'commit #{number}'", &block)
+        output = run_command({env: "export GIT_EDITOR=$PWD/spec/git_editor.rb", command:"echo \"#{number}\" > README.md; git add README.md; git commit"}, &block)
+        CommitResponse.new(output)
+      end
+
+      def make_a_command_line_commit(&block)
+        number = rand(100)
+        output = run_command("echo \"#{number}\" > README.md; git add README.md; git commit -m 'command line specified commit message #{number}'", &block)
+        CommitResponse.new(output)
       end
 
       def log(&block)
         run_command("git log", &block)
+      end
+
+      def log_for_one_commit(sha, &block)
+        run_command("git log #{sha}^..#{sha}", &block)
+      end
+
+      def one_line_log(&block)
+        run_command("git log --format=oneline", &block)
+      end
+
+      def oneline_log_for_one_commit(sha, &block)
+        run_command("git log --format=oneline #{sha}^..#{sha}", &block)
       end
 
       def root
@@ -58,9 +77,20 @@ module Jiragit
         attr_accessor :path
 
         def run_command(command, &block)
-          PTY.spawn("cd #{path}; #{command} 2>&1") do |output, input|
-            sleep(1) #avoid race conditions
-            yield output, input if block_given?
+          if command.is_a? Hash
+            env = command[:env]
+            command = command[:command]
+            full_command = "#{env}; cd #{path}; #{command} 2>&1"
+          else
+            full_command = "cd #{path}; #{command} 2>&1"
+          end
+          if block_given?
+            PTY.spawn(full_command) do |output, input|
+              sleep(1) #avoid race conditions
+              yield output, input
+            end
+          else
+            `#{full_command}`
           end
         end
 
