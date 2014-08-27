@@ -41,7 +41,12 @@ module Jiragit
       end
 
       def make_a_commit(&block)
-        run_command("touch README.md; git add README.md; git commit -m 'a commit'", &block)
+        number = rand(100)
+        run_command("echo \"#{number}\" > README.md; git add README.md; git commit -m 'commit #{number}'", &block)
+      end
+
+      def log(&block)
+        run_command("git log", &block)
       end
 
       def root

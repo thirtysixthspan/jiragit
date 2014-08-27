@@ -1,0 +1,86 @@
+#!/usr/bin/env ruby
+
+require 'jiragit'
+
+log = Jiragit::Logger.new(".git/jiragit/hooks.log")
+log.hook = File.basename $0
+log.info "launched"
+
+STDIN.reopen('/dev/tty')
+
+##
+# commit source
+# message (if a -m or -F option was given);
+# template (if a -t option was given or the configuration option commit.template is set);
+# merge (if the commit is a merge or a .git/MERGE_MSG file exists);
+# squash (if a .git/SQUASH_MSG file exists); or
+# commit, followed by a commit SHA1 (if a -c, -C or --amend option was given).
+#
+def commit_source
+  ARGV[1]
+end
+
+def commit_message
+  File.read(ARGV[0])
+end
+
+def write_commit_message(message)
+  File.write(ARGV[0], message)
+end
+
+def specified_commit_message_on_command_line?
+  commit_source == 'message'
+end
+
+def has_existing_commit_message?
+  commit_source == 'commit'
+end
+
+def is_a_merge_commit?
+  commit_source == 'merge'
+end
+
+def is_a_squash_commit?
+  commit_source == 'merge'
+end
+
+def should_modify_commit_message?
+  !(has_existing_commit_message? ||
+    is_a_merge_commit? ||
+    is_a_squash_commit?)
+end
+
+def current_branch
+  Jiragit::Git.current_branch
+end
+
+def jira_store
+  @jira_store ||= Jiragit::JiraStore.new(".git/jiragit/jira_store")
+end
+
+def related_jiras(params)
+  jira_store
+    .relations(params)
+    .to_a
+    .select { |r| r.type == :jira }
+    .map(&:label)
+end
+
+def prepend_to_commit_message(line)
+  write_commit_message(line+commit_message)
+end
+
+def add_jiras_to_commit_message
+  related_jiras(branch: current_branch).each do |jira|
+    prepend_to_commit_message "\n\n#{jira}: https://peopleadmin.atlassian.net/browse/#{jira}"
+  end
+end
+
+exit(0) unless should_modify_commit_message?
+
+if related_jiras(branch: current_branch).any?
+  if !specified_commit_message_on_command_line?
+    prepend_to_commit_message "\n#------------------------------------------------#---------------------#"
+  end
+  add_jiras_to_commit_message
+end

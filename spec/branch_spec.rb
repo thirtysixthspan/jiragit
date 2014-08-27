@@ -1,19 +1,9 @@
 require './spec/spec_helper'
 require 'expect'
 
-describe "Repository Behaviors" do
+describe "Repository Branching Behaviors" do
 
-  before do
-    @repository = "test_repository"
-    @repo = create_test_repository(@repository)
-    @js = Jiragit::JiraStore.new("#{@repository}/.git/jiragit/jira_store")
-    @log = "#{@repository}/.git/jiragit/hooks.log"
-    @debug = false
-  end
-
-  after do
-    @repo.remove
-  end
+  include_context "Test Repository"
 
   context "when checking out a new branch" do
 
@@ -108,66 +98,8 @@ describe "Repository Behaviors" do
         end
       end
 
-
     end
 
-  end
-
-  def checkout_a_new_branch(branch, jira="")
-    if jira.empty?
-      text = branch
-    else
-      text = 'JIRA'
-    end
-    @repo.checkout_new_branch(branch) do |output, input|
-      output.expect(text, 20) do |message|
-        puts "new #{message}" if @debug
-        expect(message).to_not be nil
-      end
-      input.puts(jira) if !jira.empty?
-    end
-  end
-
-  def checkout_a_new_branch_with_default(branch)
-    @repo.checkout_new_branch(branch) do |output, input|
-      output.expect(']>', 20) do |message|
-        puts "new default #{message}" if @debug
-        expect(message).to_not be nil
-      end
-      input.puts ""
-    end
-  end
-
-  def checkout_an_existing_branch(branch, jira="")
-    if jira.empty?
-      text = branch
-    else
-      text = 'JIRA'
-    end
-    @repo.checkout_branch(branch) do |output, input|
-      output.expect(text, 20) do |message|
-        puts "existing #{message}" if @debug
-        expect(message).to_not be nil
-      end
-      input.puts(jira) if !jira.empty?
-    end
-  end
-
-  def assert_no_relation(first, second)
-    sleep(5)
-    relations = @js.relations(first)
-    expect(relations).to_not include Jiragit::Tag.new(second)
-  end
-
-  def assert_relation(first, second)
-    sleep(5)
-    relations = @js.relations(first)
-    expect(relations).to include Jiragit::Tag.new(second)
-  end
-
-  def assert_log_contains(regex)
-    expect(File.exists?(@log)).to be true
-    expect(`cat #{@log}`).to match(regex)
   end
 
 end
