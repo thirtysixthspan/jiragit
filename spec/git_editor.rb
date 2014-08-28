@@ -16,6 +16,14 @@ def prepend_to_commit_message(line)
 end
 
 def commit_body
+  if File.exist?('.git_commit_body')
+    File.read('.git_commit_body')
+  else
+    predefined_commit_body
+  end
+end
+
+def predefined_commit_body
 <<-BODY
 Short (50 chars or less) summary of changes
 
