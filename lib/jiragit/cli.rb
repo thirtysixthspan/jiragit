@@ -4,7 +4,7 @@ module Jiragit
 
     COMMANDS = [
       :install,
-      :remove,
+      :uninstall,
       :jira,
       :branch,
       :jira_branch
@@ -43,8 +43,8 @@ module Jiragit
       end
     end
 
-    def remove
-      puts "Removing from #{Jiragit::Git.repository_root}"
+    def uninstall
+      puts "Uninstalling from #{Jiragit::Git.repository_root}"
       gem_hook_files.each do |hook|
         `rm #{Jiragit::Git.repository_root}/.git/hooks/#{hook}`
       end

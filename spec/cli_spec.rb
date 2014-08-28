@@ -46,9 +46,9 @@ module Jiragit
         end
       end
 
-      it "should remove installed hooks" do
+      it "should uninstalled hooks" do
         cli = Cli.new([:install])
-        cli = Cli.new([:remove])
+        cli = Cli.new([:uninstall])
         cli.send(:gem_hook_files).each do |hook|
           expect(File.exists?(".git/hooks/#{hook}")).to be false
         end
