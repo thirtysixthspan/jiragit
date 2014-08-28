@@ -40,6 +40,26 @@ module Jiragit
         run_command("git checkout #{branch}", &block)
       end
 
+      def create(filename, message)
+        run_command("echo '#{message}' > #{filename}")
+      end
+
+      def add(filename)
+        run_command("git add #{filename}")
+      end
+
+      def merge(branch)
+        run_command("git merge #{branch}")
+      end
+
+      def commit(message, &block)
+        number = rand(100)
+        run_command("echo '#{message}' > .git_commit_body")
+        output = run_command({env: "export GIT_EDITOR=$PWD/spec/git_editor.rb", command:"git commit"}, &block)
+        run_command("rm .git_commit_body")
+        CommitResponse.new(output)
+      end
+
       def make_a_commit(&block)
         number = rand(100)
         output = run_command({env: "export GIT_EDITOR=$PWD/spec/git_editor.rb", command:"echo \"#{number}\" > README.md; git add README.md; git commit"}, &block)
@@ -57,7 +77,7 @@ module Jiragit
       end
 
       def log_for_one_commit(sha, &block)
-        run_command("git log #{sha}^..#{sha}", &block)
+        run_command("git log -n 1 #{sha}", &block)
       end
 
       def one_line_log(&block)
@@ -65,7 +85,7 @@ module Jiragit
       end
 
       def oneline_log_for_one_commit(sha, &block)
-        run_command("git log --format=oneline #{sha}^..#{sha}", &block)
+        run_command("git log --format=oneline -n 1 #{sha}", &block)
       end
 
       def root
