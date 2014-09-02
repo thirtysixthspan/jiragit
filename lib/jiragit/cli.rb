@@ -7,7 +7,8 @@ module Jiragit
       :uninstall,
       :jira,
       :branch,
-      :jira_branch
+      :jira_branch,
+      :browse
     ]
 
     FLAGS = [
@@ -69,8 +70,38 @@ module Jiragit
       js.relate(jira: @params[0], branch: @params[1])
     end
 
+    def browse
+      # browse jira => jira
+      # browse branch => github
+      # browse commit => github
+      type = (@params[0] || 'jira').to_sym
+      object = @params[1] || Jiragit::Git.current_branch
+      case type
+      when :jira
+        browse_jira(object)
+      end
+    end
+
+    def browse_jira(branch)
+      js = JiraStore.new("#{Jiragit::Git.repository_root}/.git/jiragit/jira_store")
+      jiras = js
+        .relations(branch: branch)
+        .to_a
+        .select { |r| r.type == :jira }
+        .map(&:label)
+      puts "Browsing jira #{jiras.first} for branch #{branch}"
+      puts "Visiting https://peopleadmin.atlassian.net/browse/#{jiras.first}"
+      run "open https://peopleadmin.atlassian.net/browse/#{jiras.first}"
+    end
+
+    # checkout branch for PA-12345
+    # checkout pr for PA-12345
 
     private
+
+      def run(command)
+        `#{command}`
+      end
 
       def silent?
         !!@args.detect { |a| a == :silent }

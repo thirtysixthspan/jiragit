@@ -1,5 +1,6 @@
 require 'rake'
 require './lib/jiragit.rb'
+require 'expect'
 
 module TestSupport
 
