@@ -40,7 +40,6 @@ def master_branch
   current_branch=='master'
 end
 
-
 def query(message, default=nil)
   if default
     print "#{message} [#{default}]> "
@@ -57,8 +56,8 @@ end
 
 def message(message)
   puts message
+  log.info message
 end
-
 
 def jira_store
   @jira_store ||= Jiragit::JiraStore.new(".git/jiragit/jira_store")
@@ -72,24 +71,32 @@ def related_jiras(params)
     .map(&:label)
 end
 
-def relate_jiras(jiras)
+def relate_jiras_to_current_branch(jiras)
   return if jiras.empty?
   jiras.gsub(/\s/,'').split(',').each do |jira|
     jira_store.relate(jira: jira, branch: current_branch) unless jira.empty?
   end
 end
 
+def message_jiras_related_to_current_branch
+  message("JIRA(s): #{related_jiras(branch: current_branch).join(', ')}")
+end
+
+def query_for_related_jiras
+  default = related_jiras(branch: previous_branch).join(', ') if new_branch?
+  query("What is the JIRA Number?", default)
+end
+
 exit(1) if detached_head || master_branch
 
 if related_jiras(branch: current_branch).any?
 
-  message("JIRA(s): #{related_jiras(branch: current_branch).join(', ')}")
+  message_jiras_related_to_current_branch
 
 else
 
-  default = related_jiras(branch: previous_branch).join(', ') if new_branch?
-  jiras = query("What is the JIRA Number?", default)
-  relate_jiras(jiras)
+  jiras = query_for_related_jiras
+  relate_jiras_to_current_branch(jiras)
 
 end
 
