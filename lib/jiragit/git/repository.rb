@@ -12,6 +12,10 @@ module Jiragit
       `git symbolic-ref -q HEAD --short`.chomp
     end
 
+    def self.current_commit
+      `git log -1 --format=%H`.chomp
+    end
+
     def self.previous_branch
       `git rev-parse --symbolic-full-name --abbrev-ref @{-1}`.chomp
     end
@@ -145,6 +149,10 @@ module Jiragit
         run_command("git log --format=oneline -n 1 #{sha}", &block)
       end
 
+      def current_commit(&block)
+        run_command("git log -1 --format=%H", &block)
+      end
+
       def root
         @path
       end
@@ -175,7 +183,7 @@ module Jiragit
               yield output, input
             end
           else
-            `#{full_command}`
+            `#{full_command}`.chomp
           end
         end
 

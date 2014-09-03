@@ -1,0 +1,51 @@
+#!/usr/bin/env ruby
+
+require 'jiragit'
+
+@log = Jiragit::Logger.new(".git/jiragit/hooks.log")
+@log.hook = File.basename $0
+@log.level = Logger::DEBUG
+
+@log.debug "launched"
+
+def current_branch
+  @current_branch ||= begin
+    branch = Jiragit::Git.current_branch
+    @log.debug "#{__method__} #{branch}"
+    branch
+  end
+end
+
+def current_commit
+  @current_commit ||= begin
+    commit = Jiragit::Git.current_commit
+    @log.debug "#{__method__} #{commit}"
+    commit
+  end
+end
+
+def jira_store
+  @jira_store ||= Jiragit::JiraStore.new(".git/jiragit/jira_store")
+end
+
+def related_jiras(params)
+  jira_store
+    .relations(params)
+    .to_a
+    .select { |r| r.type == :jira }
+    .map(&:label)
+end
+
+def relate_commit_to_current_branch
+  jira_store.relate(commit: current_commit, branch: current_branch)
+end
+
+def relate_commit_to_jiras_for_current_branch
+  related_jiras(branch: current_branch).each do |jira|
+    jira_store.relate(jira: jira, commit: current_commit)
+  end
+end
+
+relate_commit_to_current_branch
+relate_commit_to_jiras_for_current_branch
+

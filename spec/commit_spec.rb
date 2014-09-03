@@ -34,6 +34,14 @@ describe "Repository Commit Behaviors" do
         end
       end
 
+      it "relates the jira and the commit" do
+        assert_relation({jira: 'PA-12345'}, {commit: @repo.current_commit})
+      end
+
+      it "relates the branch and the commit" do
+        assert_relation({branch: 'new_branch'}, {commit: @repo.current_commit})
+      end
+
     end
 
     context "via command line" do
@@ -56,6 +64,14 @@ describe "Repository Commit Behaviors" do
             expect(message).to_not be nil
           end
         end
+      end
+
+      it "relates the jira and the commit" do
+        assert_relation({jira: 'PA-12345'}, {commit: @repo.current_commit})
+      end
+
+      it "relates the branch and the commit" do
+        assert_relation({branch: 'new_branch'}, {commit: @repo.current_commit})
       end
 
     end
