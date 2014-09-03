@@ -70,10 +70,10 @@ module Jiragit
           Dir.chdir '..'
         end
 
-        it "browses to the current jira by default" do
+        it "browses to the current branch by default" do
           expect_any_instance_of(Cli).to receive(:run) do |instance, arg|
             expect(arg).to match(/open/)
-            expect(arg).to match(/PA-12345/)
+            expect(arg).to match(/feature_branch/)
           end
           cli = Cli.new([:browse])
         end
@@ -83,6 +83,38 @@ module Jiragit
             expect(arg).to match(/open/)
             expect(arg).to match(/PA-12345/)
           end
+          cli = Cli.new([:browse, 'jira'])
+        end
+
+        it "browses to the current branch" do
+          expect_any_instance_of(Cli).to receive(:run) do |instance, arg|
+            expect(arg).to match(/open/)
+            expect(arg).to match(/feature_branch/)
+          end
+          cli = Cli.new([:browse, 'branch'])
+        end
+
+      end
+
+      context "in a new feature branch without a jira" do
+
+        before do
+          @repo.create('a_file', 'The quick fox jumped over the fence')
+          @repo.add('a_file')
+          @repo.commit('initial commit')
+          checkout_a_new_branch_with_default('feature_branch')
+          @repo.create('a_file', 'The brown fox jumped over the fence')
+          @repo.add('a_file')
+          @repo.commit('feature commit')
+          Dir.chdir @repository
+        end
+
+        after do
+          Dir.chdir '..'
+        end
+
+        it "does not browse to an unspecified jira" do
+          expect_any_instance_of(Cli).to_not receive(:run)
           cli = Cli.new([:browse, 'jira'])
         end
 

@@ -16,6 +16,63 @@ module Jiragit
       `git rev-parse --symbolic-full-name --abbrev-ref @{-1}`.chomp
     end
 
+    def self.remote
+      `git config --get remote.origin.url`.chomp
+    end
+
+    def self.github_branch_url(branch = current_branch)
+      return unless remote =~ /github.com/
+      remote
+        .gsub(/git\@github.com\:/,'https://github.com/')
+        .gsub(/.git$/,"/tree/#{branch}")
+    end
+
+    def self.github_commit_url(commit)
+      return unless remote =~ /github.com/
+      remote
+        .gsub(/git\@github.com\:/,'https://github.com/')
+        .gsub(/.git$/,"/commit/#{commit}")
+    end
+
+    def self.remote_branches
+      `git fetch 1>/dev/null 2>/dev/null`
+      `git ls-remote --heads origin`
+        .split(/\n/)
+        .map(&:chomp)
+        .map{ |line| line.split(/\t/) }
+        .map{ |entries|
+          Branch.new.tap do |branch|
+            branch.commit = entries.first
+            branch.name = entries.last
+          end
+        }
+        .sort_by{ |branch| branch.date }
+        .reverse
+    end
+
+    def self.local_branches
+      `git for-each-ref --sort=-committerdate refs/heads --format="%(objectname) %(refname)"`
+        .split(/\n/)
+        .map(&:chomp)
+        .map{ |line| line.split(/ /) }
+        .map{ |entries|
+          Branch.new.tap do |branch|
+            branch.commit = entries.first
+            branch.name = entries.last
+          end
+        }
+        .sort_by{ |branch| branch.date }
+        .reverse
+    end
+
+    def self.timestamp(reference)
+      `git log -1 --format=%ci #{reference}`.chomp
+    end
+
+    def self.committer(reference)
+      `git log -1 --format=%cN #{reference}`.chomp
+    end
+
     class Repository
 
       def self.create(path)
@@ -90,6 +147,14 @@ module Jiragit
 
       def root
         @path
+      end
+
+      def origin
+        run_command("git remote -v")
+      end
+
+      def origin=(path)
+        run_command("git remote add origin #{path}")
       end
 
       private

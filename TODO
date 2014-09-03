@@ -1,0 +1,5 @@
+IDEAS && TODO
+-------------
+* Consider using git as the backing database
+* implement "jiraget checkout branch for PA-12345"
+* implement "jiraget checkout pr for PA-12345"

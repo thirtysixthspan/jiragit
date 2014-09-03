@@ -8,7 +8,9 @@ module Jiragit
       :jira,
       :branch,
       :jira_branch,
-      :browse
+      :browse,
+      :remote,
+      :local
     ]
 
     FLAGS = [
@@ -52,6 +54,10 @@ module Jiragit
     end
 
     def jira
+      if @params.empty? || @params[0].empty?
+        warn "Please provide a jira"
+        return
+      end
       puts "Listing all relations for jira #{@params[0]}"
       js = JiraStore.new("#{Jiragit::Git.repository_root}/.git/jiragit/jira_store")
       puts js.relations(jira: @params[0]).to_a
@@ -71,31 +77,38 @@ module Jiragit
     end
 
     def browse
-      # browse jira => jira
-      # browse branch => github
-      # browse commit => github
-      type = (@params[0] || 'jira').to_sym
-      object = @params[1] || Jiragit::Git.current_branch
+      type = :branch
+      type, object = classify(*@params) unless @params.empty?
+      unless object
+        object = case type
+        when :jira
+          related(:jira, {branch: Jiragit::Git.current_branch}).first
+        when :branch
+          Jiragit::Git.current_branch
+        when :commit
+          related(:commit, {branch: Jiragit::Git.current_branch}).first
+        end
+      end
+      self.send("browse_#{type}", object)
+    end
+
+    def remote
+      # remote branches
+      type = (@params[0] || 'branches').to_sym
       case type
-      when :jira
-        browse_jira(object)
+      when :branches
+        list_remote_branches
       end
     end
 
-    def browse_jira(branch)
-      js = JiraStore.new("#{Jiragit::Git.repository_root}/.git/jiragit/jira_store")
-      jiras = js
-        .relations(branch: branch)
-        .to_a
-        .select { |r| r.type == :jira }
-        .map(&:label)
-      puts "Browsing jira #{jiras.first} for branch #{branch}"
-      puts "Visiting https://peopleadmin.atlassian.net/browse/#{jiras.first}"
-      run "open https://peopleadmin.atlassian.net/browse/#{jiras.first}"
+    def local
+      # local branches
+      type = (@params[0] || 'branches').to_sym
+      case type
+      when :branches
+        list_local_branches
+      end
     end
-
-    # checkout branch for PA-12345
-    # checkout pr for PA-12345
 
     private
 
@@ -114,6 +127,92 @@ module Jiragit
 
       def gem_hook_files
         gem_hook_paths.map { |hook| File.basename(hook) }
+      end
+
+      IS_JIRA = /\b([A-Z]{1,4}-[1-9][0-9]{0,6})\b/
+      IS_COMMIT = /\b([0-9a-f]{6,40})\b/
+      IS_BRANCH = /\b(?!\/)(?!.*\/\.)(?!.*\.\.)(?!.*\/\/)(?!.*\@\{)(?!.*\\)[^\040\177\s\~\^\:\?\*\[]+(?<!\.lock)(?<!\/)(?<!\.)\b/
+
+      def classify(*params)
+        case params.first
+        when /jira/
+          [ :jira, params.size>1 ? params.last[IS_JIRA] : nil ]
+        when /commit/
+          [ :commit, params.size>1 ? params.last[IS_COMMIT] : nil ]
+        when /branch/
+          [ :branch, params.size>1 ? params.last[IS_BRANCH] : nil ]
+        when IS_JIRA
+          [ :jira, params.first[IS_JIRA] ]
+        when IS_COMMIT
+          [ :commit, params.first[IS_COMMIT] ]
+        when IS_BRANCH
+          [ :branch, params.first[IS_BRANCH] ]
+        else
+          [ nil, nil ]
+        end
+      end
+
+      def browse_jira(jira)
+        if !jira || jira.empty?
+          warn "No jira available"
+          return
+        end
+        puts "Browsing jira #{jira}"
+        puts "Visiting https://peopleadmin.atlassian.net/browse/#{jira}"
+        run "open https://peopleadmin.atlassian.net/browse/#{jira}"
+      end
+
+      def related(type, relation)
+        js = JiraStore.new("#{Jiragit::Git.repository_root}/.git/jiragit/jira_store")
+        jiras = js
+          .relations(relation)
+          .to_a
+          .select { |r| r.type == type }
+          .map(&:label)
+      end
+
+      def browse_branch(branch)
+        if !branch || branch.empty?
+          warn "No branch available"
+          return
+        end
+        puts "Browsing branch #{branch}"
+        url = Jiragit::Git.github_branch_url(branch)
+        unless url
+          puts "No remote repository found on Github"
+          return
+        end
+        puts "Visiting #{url}"
+        run "open #{url}"
+      end
+
+      def browse_commit(commit)
+        if !commit || commit.empty?
+          warn "No commit available"
+          return
+        end
+        puts "Browsing commit #{commit}"
+        url = Jiragit::Git.github_commit_url(commit)
+        unless url
+          puts "No remote repository found on Github"
+          return
+        end
+        puts "Visiting #{url}"
+        run "open #{url}"
+      end
+
+      def list_remote_branches
+        puts "Fetching remote branch information"
+        Jiragit::Git.remote_branches.each do |branch|
+          puts "#{'%-10.10s'%branch.date}\s\s#{branch.short_commit}\s\s#{'%-10.10s'%branch.committer}\s\s#{branch.short_name}"
+        end
+      end
+
+      def list_local_branches
+        puts "Fetching local branch information"
+        Jiragit::Git.local_branches.each do |branch|
+          puts "#{'%-10.10s'%branch.date}\s\s#{branch.short_commit}\s\s#{'%-10.10s'%branch.committer}\s\s#{branch.short_name}"
+        end
       end
 
   end

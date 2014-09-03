@@ -14,6 +14,7 @@ module TestSupport
   def create_test_repository(repository)
     repo = Jiragit::Git::Repository.create(repository)
     repo.make_a_commit
+    repo.origin = "git@github.com:thirtysixthspan/jiragit_test.git"
     Dir.chdir repository
     Jiragit::Cli.new([:install, :silent])
     Dir.chdir '..'
