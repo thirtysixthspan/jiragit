@@ -9,14 +9,6 @@ require 'jiragit'
 @log.debug "launched"
 STDIN.reopen('/dev/tty')
 
-##
-# commit source
-# message (if a -m or -F option was given);
-# template (if a -t option was given or the configuration option commit.template is set);
-# merge (if the commit is a merge or a .git/MERGE_MSG file exists);
-# squash (if a .git/SQUASH_MSG file exists); or
-# commit, followed by a commit SHA1 (if a -c, -C or --amend option was given).
-#
 def commit_source
   ARGV[1]
 end
@@ -82,21 +74,6 @@ def related_jiras(params)
     .map(&:label)
 end
 
-def relate_jiras(jiras)
-  return if jiras.empty?
-  jiras.gsub(/\s/,'').split(',').each do |jira|
-    jira_store.relate(jira: jira, branch: current_branch) unless jira.empty?
-  end
-end
-
-def relate_merge_jiras_to_current_branch
-  jiras = related_jiras(branch: merge_branch)
-  return if jiras.empty?
-
-  jiras.each(&method(:relate_jiras))
-end
-
-
 def prepend_to_commit_message(line)
   write_commit_message(line+"\n"+commit_message)
 end
@@ -110,6 +87,16 @@ def append_jiras_to_commit_message
   return if jiras.empty?
 
   append_to_commit_message "\n"
+  jiras.each do |jira|
+    append_to_commit_message "#{jira}: https://peopleadmin.atlassian.net/browse/#{jira}"
+  end
+end
+
+def append_merge_jiras_to_commit_message
+  jiras = related_jiras(branch: merge_branch)
+  return if jiras.empty?
+
+  append_to_commit_message "Merged JIRA(s)"
   jiras.each do |jira|
     append_to_commit_message "#{jira}: https://peopleadmin.atlassian.net/browse/#{jira}"
   end
@@ -131,10 +118,14 @@ end
 
 exit(0) unless should_modify_commit_message?
 
-relate_merge_jiras_to_current_branch if is_a_merge_commit?
-
-if specified_commit_message_on_command_line? || is_a_merge_commit?
+case
+when specified_commit_message_on_command_line?
   append_jiras_to_commit_message
+
+when is_a_merge_commit?
+  append_jiras_to_commit_message
+  append_merge_jiras_to_commit_message
+
 else
   prepend_line_length_guide
   prepend_jiras_to_commit_message

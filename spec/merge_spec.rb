@@ -31,10 +31,10 @@ describe "Repository Merge Behaviors" do
 
     context "into the master branch without conflicts" do
 
-      it "should relate the jira" do
+      it "should not relate the jira" do
         checkout_an_existing_branch('master')
         @repo.merge('feature_branch')
-        assert_relation({jira: 'PA-12345'}, {branch: 'master'})
+        assert_no_relation({jira: 'PA-12345'}, {branch: 'master'})
       end
 
       it "should add the jira to the merge commit message" do
@@ -55,7 +55,7 @@ describe "Repository Merge Behaviors" do
         checkout_an_existing_branch('feature_branch')
         @repo.merge('another_feature_branch')
         assert_relation({jira: 'PA-12345'}, {branch: 'feature_branch'})
-        assert_relation({jira: 'PA-54321'}, {branch: 'feature_branch'})
+        assert_no_relation({jira: 'PA-54321'}, {branch: 'feature_branch'})
       end
 
       it "should add the current branch jira to the merge commit message" do
