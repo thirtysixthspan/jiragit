@@ -4,24 +4,40 @@ module Jiragit
 
   module Git
 
+    class NoRepositoryError < StandardError;
+      def initialize(msg = "No valid Git repository was found in current directory.")
+        super
+      end
+    end
+
     def self.repository_root
-      `git rev-parse --show-toplevel`.chomp
+      value = `git rev-parse --show-toplevel 2>&1`.chomp
+      raise NoRepositoryError if value=~/Not a git repository/
+      value
     end
 
     def self.current_branch
-      `git symbolic-ref -q HEAD --short`.chomp
+      value = `git symbolic-ref -q HEAD --short 2>&1`.chomp
+      raise NoRepositoryError if value=~/Not a git repository/
+      value
     end
 
     def self.current_commit
-      `git log -1 --format=%H`.chomp
+      value = `git log -1 --format=%H 2>&1`.chomp
+      raise NoRepositoryError if value=~/Not a git repository/
+      value
     end
 
     def self.previous_branch
-      `git rev-parse --symbolic-full-name --abbrev-ref @{-1}`.chomp
+      value = `git rev-parse --symbolic-full-name --abbrev-ref @{-1} 2>&1`.chomp
+      raise NoRepositoryError if value=~/Not a git repository/
+      value
     end
 
     def self.remote
-      `git config --get remote.origin.url`.chomp
+      value = `git config --get remote.origin.url 2>&1`.chomp
+      raise NoRepositoryError if value=~/Not a git repository/
+      value
     end
 
     def self.github_branch_url(branch = current_branch)
@@ -39,8 +55,10 @@ module Jiragit
     end
 
     def self.remote_branches
-      `git fetch 1>/dev/null 2>/dev/null`
-      `git ls-remote --heads origin`
+      value = `git fetch 2>&1`
+      raise NoRepositoryError if value=~/Not a git repository/
+
+      `git ls-remote --heads origin 2>&1`
         .split(/\n/)
         .map(&:chomp)
         .map{ |line| line.split(/\t/) }
@@ -55,7 +73,7 @@ module Jiragit
     end
 
     def self.local_branches
-      `git for-each-ref --sort=-committerdate refs/heads --format="%(objectname) %(refname)"`
+      value = `git for-each-ref --sort=-committerdate refs/heads --format="%(objectname) %(refname)" 2>&1`
         .split(/\n/)
         .map(&:chomp)
         .map{ |line| line.split(/ /) }
@@ -67,14 +85,20 @@ module Jiragit
         }
         .sort_by{ |branch| branch.date }
         .reverse
+      raise NoRepositoryError if value=~/Not a git repository/
+      value
     end
 
     def self.timestamp(reference)
-      `git log -1 --format=%ci #{reference}`.chomp
+      value = `git log -1 --format=%ci #{reference} 2>&1`.chomp
+      raise NoRepositoryError if value=~/Not a git repository/
+      value
     end
 
     def self.committer(reference)
-      `git log -1 --format=%cN #{reference}`.chomp
+      value = `git log -1 --format=%cN #{reference} 2>&1`.chomp
+      raise NoRepositoryError if value=~/Not a git repository/
+      value
     end
 
     class Repository
@@ -109,8 +133,12 @@ module Jiragit
         run_command("git add #{filename}")
       end
 
-      def merge(branch)
-        run_command("git merge #{branch}")
+      def merge(branch, message="", &block)
+        number = rand(100)
+        run_command("echo '#{message}' > .git_commit_body")
+        output = run_command({env: "export GIT_EDITOR=$PWD/spec/git_editor.rb", command:"git merge #{branch}"}, &block)
+        run_command("rm .git_commit_body")
+        CommitResponse.new(output)
       end
 
       def commit(message, &block)

@@ -18,12 +18,16 @@ module Jiragit
     ]
 
     def initialize(args)
-     exit_with_help and return if args.empty?
-     @args = args
-     command = args[0].to_sym
-     @params = args[1..-1]
-     exit_with_help and return unless COMMANDS.include?(command)
-     self.send(command)
+      exit_with_help and return if args.empty?
+      @args = args
+      command = args[0].to_sym
+      @params = args[1..-1]
+      exit_with_help and return unless COMMANDS.include?(command)
+      begin
+        self.send(command)
+      rescue => error
+        $stderr.puts error.message
+      end
     end
 
     def exit_with_help

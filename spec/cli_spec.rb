@@ -14,13 +14,35 @@ module Jiragit
     context "in an empty repository" do
 
       before do
+        @current_directory = Dir.pwd
+        @directory = "/tmp/test_directory"
+        Dir.mkdir(@directory) unless Dir.exists?(@directory)
+        Dir.chdir(@directory)
+      end
+
+      after do
+        Dir.chdir(@current_directory)
+        Dir.rmdir(@directory)
+      end
+
+      it "provides an error message when calling commands that require a repository" do
+        Cli.new([:install])
+        expect($stderr.string).to match(/No valid Git repository/)
+      end
+
+    end
+
+    context "in an empty repository" do
+
+      before do
+        @current_directory = Dir.pwd
         repository = "test_repository"
         Jiragit::Git::Repository.create(repository)
         Dir.chdir repository
       end
 
       after do
-        Dir.chdir '..'
+        Dir.chdir(@current_directory)
       end
 
       it "should not have hooks installed" do
