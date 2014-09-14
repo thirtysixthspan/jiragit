@@ -2,9 +2,11 @@
 
 require 'jiragit'
 
-log = Jiragit::Logger.new(".git/jiragit/hooks.log")
-log.hook = File.basename $0
-log.info "launched"
+@log = Jiragit::Logger.new(".git/jiragit/hooks.log")
+@log.hook = File.basename $0
+@log.level = Logger::DEBUG
+
+@log.debug "launched"
 
 STDIN.reopen('/dev/tty')
 
@@ -56,7 +58,7 @@ end
 
 def message(message)
   puts message
-  log.info message
+  @log.debug message
 end
 
 def jira_store

@@ -74,59 +74,59 @@ def related_jiras(params)
     .map(&:label)
 end
 
-def prepend_to_commit_message(line)
-  write_commit_message(line+"\n"+commit_message)
+def add_to_commit_message(line)
+  message = commit_message
+  message.insert(message.index('#') || -1,line+"\n")
+  write_commit_message(message)
 end
 
-def append_to_commit_message(line)
-  write_commit_message(commit_message+"\n"+line)
-end
-
-def append_jiras_to_commit_message
+def add_jiras_to_commit_message
   jiras = related_jiras(branch: current_branch)
   return if jiras.empty?
 
-  append_to_commit_message "\n"
+  add_to_commit_message ""
   jiras.each do |jira|
-    append_to_commit_message "#{jira}: https://peopleadmin.atlassian.net/browse/#{jira}"
+    add_to_commit_message "#{jira}: https://peopleadmin.atlassian.net/browse/#{jira}"
   end
+  add_to_commit_message ""
 end
 
-def append_merge_jiras_to_commit_message
+def add_merge_jiras_to_commit_message
   jiras = related_jiras(branch: merge_branch)
   return if jiras.empty?
 
-  append_to_commit_message "Merged JIRA(s)"
+  add_to_commit_message "Merged JIRA(s)"
   jiras.each do |jira|
-    append_to_commit_message "#{jira}: https://peopleadmin.atlassian.net/browse/#{jira}"
+    add_to_commit_message "#{jira}: https://peopleadmin.atlassian.net/browse/#{jira}"
   end
+  add_to_commit_message ""
 end
 
-def prepend_jiras_to_commit_message
+def add_jiras_to_commit_message
   jiras = related_jiras(branch: current_branch)
   return if jiras.empty?
 
   jiras.each do |jira|
-    prepend_to_commit_message "#{jira}: https://peopleadmin.atlassian.net/browse/#{jira}"
+    add_to_commit_message "#{jira}: https://peopleadmin.atlassian.net/browse/#{jira}"
   end
-  prepend_to_commit_message "\n"
+  add_to_commit_message ""
 end
 
-def prepend_line_length_guide
-  prepend_to_commit_message "\n#------------------------------------------------#---------------------#"
+def add_line_length_guide
+  add_to_commit_message "\n#------------------------------------------------#---------------------#"
 end
 
 exit(0) unless should_modify_commit_message?
 
 case
 when specified_commit_message_on_command_line?
-  append_jiras_to_commit_message
+  add_jiras_to_commit_message
 
 when is_a_merge_commit?
-  append_jiras_to_commit_message
-  append_merge_jiras_to_commit_message
+  add_jiras_to_commit_message
+  add_merge_jiras_to_commit_message
 
 else
-  prepend_line_length_guide
-  prepend_jiras_to_commit_message
+  add_line_length_guide
+  add_jiras_to_commit_message
 end
