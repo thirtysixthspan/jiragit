@@ -1,0 +1,89 @@
+#!/usr/bin/env ruby
+
+require 'jiragit'
+
+@log = Jiragit::Logger.new(".git/jiragit/hooks.log")
+@log.hook = File.basename $0
+@log.level = Logger::DEBUG
+
+@log.debug "launched"
+
+STDIN.reopen('/dev/tty')
+
+def commit_message_filename
+  ARGV[0]
+end
+
+def commit_message
+  message = File.read(commit_message_filename)
+  @log.debug "#{__method__}\n#{message}"
+  message
+end
+
+def query(message, default=nil)
+  if default
+    print "#{message} [#{default}]> "
+  else
+    print "#{message} > "
+  end
+  response = STDIN.gets.chomp
+  if response.empty? && default
+    default
+  else
+    response
+  end
+end
+
+def message(message)
+  puts message
+  @log.debug message
+end
+
+def fail(message)
+  error_message = "Commit rejected: #{message}"
+  @log.debug error_message
+  $stderr.puts error_message
+
+  response = query("Edit commit message?", "yes")
+  if response[0].downcase == 'y'
+    root_dir = Jiragit::Git.repository_root
+    hook_dir = ".git/hooks"
+    exec("cd #{root_dir}; $GIT_EDITOR '#{commit_message_filename}'; #{hook_dir}/commit-msg '#{commit_message_filename}'")
+  else
+    $stderr.puts "Commit aborted"
+    exit 1
+  end
+
+end
+
+def enforce_a_title(line = "")
+  return unless line.length == 0
+  fail "The title of the commit message must be present"
+end
+
+def enforce_title_length(line)
+  return unless line.length > 50
+  fail "The title of the commit message must be no longer than 50 characters"
+end
+
+def enforce_body_length(line)
+  return unless line.length > 72
+  fail "Lines in the body of the commit message must be no longer than 72 characters"
+end
+
+def enforce_blank_line(line)
+  return unless line.length > 0
+  fail "The commit title and body must be separated by a single blank line"
+end
+
+def enforce_commit_message_length
+  lines = commit_message.split(/\n/)
+  title = lines.shift
+  enforce_a_title(title)
+  enforce_title_length(title)
+  enforce_blank_line(lines.shift) if lines.any?
+  lines.each { |line| enforce_body_length(line) } if lines.any?
+end
+
+enforce_commit_message_length
+
