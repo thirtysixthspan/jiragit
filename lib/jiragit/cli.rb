@@ -12,7 +12,8 @@ module Jiragit
       :remote,
       :local,
       :configure,
-      :configuration
+      :configuration,
+      :build
     ]
 
     FLAGS = [
@@ -68,21 +69,18 @@ module Jiragit
         return
       end
       puts "Listing all relations for jira #{@params[0]}"
-      js = JiraStore.new("#{Jiragit::Git.repository_root}/.git/jiragit/jira_store")
-      puts js.relations(jira: @params[0]).to_a
+      puts jira_store.relations(jira: @params[0]).to_a
     end
 
     def branch
       branch = @params[0] || Jiragit::Git.current_branch
       puts "Listing all relations for branch #{branch}"
-      js = JiraStore.new("#{Jiragit::Git.repository_root}/.git/jiragit/jira_store")
-      puts js.relations(branch: branch).to_a
+      puts jira_store.relations(branch: branch).to_a
     end
 
     def jira_branch
       puts "Relating jira #{@params[0]} and branch #{@params[1]}"
-      js = JiraStore.new("#{Jiragit::Git.repository_root}/.git/jiragit/jira_store")
-      js.relate(jira: @params[0], branch: @params[1])
+      jira_store.relate(jira: @params[0], branch: @params[1])
     end
 
     def browse
@@ -135,7 +133,22 @@ module Jiragit
       end
     end
 
+    def build
+      commits = Jiragit::Git.log
+      commits.each do |commit|
+        commit.jiras.each do |jira|
+          puts "relating: commit #{commit.sha} to jira: #{jira}"
+          jira_store.relate(commit: commit.sha, jira: jira, save: false)
+        end
+      end
+      jira_store.save
+    end
+
     private
+
+      def jira_store
+        @jira_store ||= JiraStore.new("#{Jiragit::Git.repository_root}/.git/jiragit/jira_store")
+      end
 
       def run(command)
         `#{command}`
@@ -192,8 +205,7 @@ module Jiragit
       end
 
       def related(type, relation)
-        js = JiraStore.new("#{Jiragit::Git.repository_root}/.git/jiragit/jira_store")
-        jiras = js
+        jiras = jira_store
           .relations(relation)
           .to_a
           .select { |r| r.type == type }

@@ -11,7 +11,7 @@ module Jiragit
     def relate(params)
       tags = extract_tags(params).compact
       vault.relate(*tags)
-      vault.save
+      vault.save unless params[:save] == false
     end
 
     def relations(params)
@@ -24,6 +24,10 @@ module Jiragit
 
     def reload
       vault.load
+    end
+
+    def save
+      vault.save
     end
 
     private

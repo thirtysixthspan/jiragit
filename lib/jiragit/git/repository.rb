@@ -101,6 +101,13 @@ module Jiragit
       value
     end
 
+    def self.log
+      log = `git log 2>&1`.chomp
+      raise NoRepositoryError if log=~/^Not a git repository/
+      commits = log.split(/(?=commit [0-9a-f]{40})/)
+      commits.map { |commit| Commit.new(commit) }
+    end
+
     class Repository
 
       def self.create(path)
