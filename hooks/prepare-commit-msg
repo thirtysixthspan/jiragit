@@ -7,6 +7,9 @@ require 'jiragit'
 @log.level = Logger::DEBUG
 
 @log.debug "launched"
+
+@config = Jiragit::Configuration.new("#{`echo ~`.chomp}/.jiragit")
+
 STDIN.reopen('/dev/tty')
 
 def commit_source
@@ -74,7 +77,7 @@ def related_jiras(params)
     .map(&:label)
 end
 
-def add_to_commit_message(line)
+def add_to_commit_message(line="")
   message = commit_message
   message.insert(message.index('#') || -1,line+"\n")
   write_commit_message(message)
@@ -84,11 +87,11 @@ def add_jiras_to_commit_message
   jiras = related_jiras(branch: current_branch)
   return if jiras.empty?
 
-  add_to_commit_message ""
+  add_to_commit_message
   jiras.each do |jira|
-    add_to_commit_message "#{jira}: https://peopleadmin.atlassian.net/browse/#{jira}"
+    add_to_commit_message formatted_jira(jira)
   end
-  add_to_commit_message ""
+  add_to_commit_message
 end
 
 def add_merge_jiras_to_commit_message
@@ -97,9 +100,9 @@ def add_merge_jiras_to_commit_message
 
   add_to_commit_message "Merged JIRA(s)"
   jiras.each do |jira|
-    add_to_commit_message "#{jira}: https://peopleadmin.atlassian.net/browse/#{jira}"
+    add_to_commit_message formatted_jira(jira)
   end
-  add_to_commit_message ""
+  add_to_commit_message
 end
 
 def add_jiras_to_commit_message
@@ -107,19 +110,28 @@ def add_jiras_to_commit_message
   return if jiras.empty?
 
   jiras.each do |jira|
-    add_to_commit_message "#{jira}: https://peopleadmin.atlassian.net/browse/#{jira}"
+    add_to_commit_message formatted_jira(jira)
   end
-  add_to_commit_message ""
+  add_to_commit_message
 end
 
 def add_line_length_guide
   add_to_commit_message "\n#------------------------------------------------#---------------------#"
 end
 
+def formatted_jira(jira)
+  if @config.include?(:jira_url) && !@config[:jira_url].empty?
+    "#{jira}: #{@config[:jira_url]}/browse/#{jira}"
+  else
+    jira
+  end
+end
+
 exit(0) unless should_modify_commit_message?
 
 case
 when specified_commit_message_on_command_line?
+  add_to_commit_message
   add_jiras_to_commit_message
 
 when is_a_merge_commit?

@@ -81,6 +81,7 @@ def enforce_commit_message_length
   title = lines.shift
   enforce_a_title(title)
   enforce_title_length(title)
+  puts lines
   enforce_blank_line(lines.shift) if lines.any?
   lines.each { |line| enforce_body_length(line) } if lines.any?
 end

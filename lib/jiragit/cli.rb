@@ -10,7 +10,9 @@ module Jiragit
       :jira_branch,
       :browse,
       :remote,
-      :local
+      :local,
+      :configure,
+      :configuration
     ]
 
     FLAGS = [
@@ -23,6 +25,9 @@ module Jiragit
       command = args[0].to_sym
       @params = args[1..-1]
       exit_with_help and return unless COMMANDS.include?(command)
+
+      @config = Jiragit::Configuration.new("#{`echo ~`.chomp}/.jiragit")
+
       begin
         self.send(command)
       rescue => error
@@ -114,6 +119,22 @@ module Jiragit
       end
     end
 
+    def configure
+      if @params.size!=2 || @params.first.empty? || @params.last.empty?
+        warn "Please provide parameter and value"
+        return
+      end
+      @config[@params.first.to_sym] = @params.last
+      puts "Setting #{@params.first.to_sym} to #{@params.last}"
+    end
+
+    def configuration
+      puts "Configuration settings"
+      @config.each do |key,value|
+        puts "#{key} = #{value}"
+      end
+    end
+
     private
 
       def run(command)
@@ -161,9 +182,13 @@ module Jiragit
           warn "No jira available"
           return
         end
+        if !@config[:jira_url]
+          warn "No jira_url configured"
+          return
+        end
         puts "Browsing jira #{jira}"
-        puts "Visiting https://peopleadmin.atlassian.net/browse/#{jira}"
-        run "open https://peopleadmin.atlassian.net/browse/#{jira}"
+        puts "Visiting #{@config[:jira_url]}/browse/#{jira}"
+        run "open #{@config[:jira_url]}/browse/#{jira}"
       end
 
       def related(type, relation)

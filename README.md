@@ -16,6 +16,10 @@ Install the jiragit gem (globally)
 ```
 $ gem install jiragit
 ```
+Configure your JIRA URL
+```
+jiragit configure jira_url https://yourcompany.atlassian.net
+```
 Use jiragit to install the custom Git hooks into your repository
 ```
 $ cd repository
