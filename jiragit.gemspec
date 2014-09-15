@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.email         = ["derrick.parkhurst@gmail.com"]
   spec.summary       = %q{Integrate Jira and Git}
   spec.description   = %q{add jira numbers and urls to your commits automatically}
-  spec.homepage      = "http://null"
+  spec.homepage      = "https://github.com/thirtysixthspan/jiragit"
   spec.license       = "MIT"
 
   spec.files         = Dir['Rakefile', '{hooks,bin,lib,spec}/**/*', 'README*', 'LICENSE*']
