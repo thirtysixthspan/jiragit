@@ -23,11 +23,11 @@ def branch_switch?
 end
 
 def current_branch
-  Jiragit::Git.current_branch
+  @current_branch ||= Jiragit::Git.current_branch
 end
 
 def previous_branch
-  Jiragit::Git.previous_branch
+  @previous_branch ||= Jiragit::Git.previous_branch
 end
 
 def new_branch?
@@ -84,8 +84,15 @@ def message_jiras_related_to_current_branch
   message("JIRA(s): #{related_jiras(branch: current_branch).join(', ')}")
 end
 
+def jiras_from_current_branch_name
+  current_branch.scan(/([A-Z]{1,4}-[1-9][0-9]{0,6})/).to_a
+end
+
 def query_for_related_jiras
-  default = related_jiras(branch: previous_branch).join(', ') if new_branch?
+  related = related_jiras(branch: previous_branch)
+  branch = jiras_from_current_branch_name
+  puts "default branch: #{branch}"
+  default = [related, branch].flatten.join(', ')
   query("What is the JIRA Number?", default)
 end
 

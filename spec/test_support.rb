@@ -8,7 +8,7 @@ module TestSupport
     rake = Rake.application
     rake.init
     rake.load_rakefile
-    rake['gem:install'].invoke
+    rake['install'].invoke
   end
 
   def create_test_repository(repository)

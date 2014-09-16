@@ -42,6 +42,20 @@ describe "Repository Branching Behaviors" do
 
     end
 
+    context "the new branch name includes a jira" do
+
+      before do
+        checkout_a_new_branch('parent_branch')
+        @repo.make_a_commit
+      end
+
+      it "should provide and accept default jira from branch name" do
+        checkout_a_new_branch_with_default('PA-12345_branch')
+        assert_relation({jira: 'PA-12345'}, {branch: 'PA-12345_branch'})
+      end
+
+    end
+
   end
 
   context "when checking out an existing branch" do

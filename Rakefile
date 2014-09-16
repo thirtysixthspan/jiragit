@@ -12,7 +12,7 @@ namespace :gem do
   end
 
   task :install => [:build] do
-    `gem install pkg/jiragit-1.0.0.gem`
+    `gem install pkg/jiragit*.gem`
   end
 
 end
