@@ -91,7 +91,6 @@ end
 def query_for_related_jiras
   related = related_jiras(branch: previous_branch)
   branch = jiras_from_current_branch_name
-  puts "default branch: #{branch}"
   default = [related, branch].flatten.join(', ')
   query("What is the JIRA Number?", default)
 end
