@@ -66,7 +66,12 @@ def enforce_title_length(line)
   fail "The title of the commit message must be no longer than 50 characters"
 end
 
+def is_comment?(line)
+  line[0] == '#'
+end
+
 def enforce_body_length(line)
+  return if is_comment?(line)
   return unless line.length > 72
   fail "Lines in the body of the commit message must be no longer than 72 characters"
 end

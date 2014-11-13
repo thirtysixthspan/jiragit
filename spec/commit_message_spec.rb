@@ -77,6 +77,15 @@ two together.
       end
     end
 
+    it "comments in the body are ignored when checking line length" do
+      message = "This is a test" + "\n\n" + "#" + "b"*73
+      @repo.commit(message) do |output, input|
+        output.expect("This is a test", 5) do |message|
+          expect(message).to_not be nil
+        end
+      end
+    end
+
   end
 
 end
