@@ -116,4 +116,22 @@ describe "Repository Branching Behaviors" do
 
   end
 
+  context "when checking out a file" do
+
+    before do
+      checkout_a_new_branch('new_branch', 'PA-12345')
+      @repo.make_a_commit
+      checkout_an_existing_branch('master')
+    end
+
+    it "does not ask for a jira number" do
+      @repo.checkout_file('README.md') do |output, input|
+        output.expect("What is the JIRA Number?", 5) do |message|
+          expect(message).to be nil
+        end
+      end
+    end
+
+  end
+
 end

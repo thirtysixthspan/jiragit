@@ -132,6 +132,10 @@ module Jiragit
         run_command("git checkout #{branch}", &block)
       end
 
+      def checkout_file(file, &block)
+        run_command("git checkout #{file}", &block)
+      end
+
       def create(filename, message)
         run_command("echo '#{message}' > #{filename}")
       end

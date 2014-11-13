@@ -95,7 +95,7 @@ def query_for_related_jiras
   query("What is the JIRA Number?", default)
 end
 
-exit(1) if detached_head || master_branch
+exit(1) if detached_head || master_branch || !branch_switch?
 
 if related_jiras(branch: current_branch).any?
 
