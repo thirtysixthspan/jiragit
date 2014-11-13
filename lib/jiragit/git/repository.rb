@@ -160,6 +160,16 @@ module Jiragit
         CommitResponse.new(output)
       end
 
+      def command_line_commit(message, &block)
+        output = run_command("git commit -m '#{message}'", &block)
+        CommitResponse.new(output)
+      end
+
+      def amended_command_line_commit(message, &block)
+        output = run_command("git commit --amend -m '#{message}'", &block)
+        CommitResponse.new(output)
+      end
+
       def make_a_commit(&block)
         number = rand(100)
         output = run_command({env: "export GIT_EDITOR=$PWD/spec/git_editor.rb", command:"echo \"#{number}\" > README.md; git add README.md; git commit"}, &block)
